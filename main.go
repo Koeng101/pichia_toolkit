@@ -6,11 +6,12 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 func main() {
 	// There are 4 chromosomes of Pichia. We're going to add them all together into a final codon table
-	fmt.Println("Starting codon table generation")
+	start := time.Now()
 	finalTable := poly.ReadGbk("data/pichia_chr1.gb").GetOptimizationTable(poly.GetCodonTable(11))
 	finalTable = poly.AddCodonTable(finalTable, poly.ReadGbk("data/pichia_chr2.gb").GetOptimizationTable(poly.GetCodonTable(11)))
 	finalTable = poly.AddCodonTable(finalTable, poly.ReadGbk("data/pichia_chr3.gb").GetOptimizationTable(poly.GetCodonTable(11)))
@@ -18,9 +19,10 @@ func main() {
 
 	// Write codon table to data/pichiaTable.json
 	poly.WriteCodonJSON(finalTable, "data/pichiaTable.json")
+	tableFinish := time.Since(start)
+	fmt.Println(fmt.Sprintf("Finished codon table generation in %fs", tableFinish.Seconds()))
+	start = time.Now()
 
-	// Read all the proteins from the enzymes.fasta and prepare fragmentation
-	fmt.Println("Starting protein optimization")
 	enzymesChan := make(chan poly.Fasta, 100)
 	go poly.ReadFASTAConcurrent("data/enzymes.fasta", enzymesChan)
 	enzymeFragments := make(map[string][]string)
@@ -41,13 +43,22 @@ func main() {
 		functions = append(functions, poly.FindTypeIIS)
 
 		// Optimize sequence
-		optimizedSeq, err = poly.FixCds(poly.Optimize(seq, finalTable), finalTable, functions)
+		optimizedSeq, err = poly.FixCds(":memory:", poly.Optimize(seq, finalTable), finalTable, functions)
 		if err != nil {
 			fmt.Println(err)
 		}
 
 		// Add stop codon, because for some reason it is removed when you optimize a sequence
 		optimizedSeq = optimizedSeq + "TAA"
+
+		for _, cutSite := range []string{"GAAGAC", "GGTCTC", "GCGATG", "CGTCTC", "GCTCTTC", "CACCTGC"} {
+			if strings.Contains(optimizedSeq, cutSite) {
+				fmt.Println(enzyme.Name + " contains " + cutSite)
+			}
+			if strings.Contains(poly.ReverseComplement(optimizedSeq), cutSite) {
+				fmt.Println(enzyme.Name + " reverse complement contains " + cutSite)
+			}
+		}
 
 		// Add BsaI cutting site
 		optimizedSeq = "GGTCTCTA" + optimizedSeq + "TGAGCTTAGAGACC"
@@ -63,6 +74,9 @@ func main() {
 			enzymeFragments[enzyme.Name] = []string{"GTAAAACGACGGCCAGT" + optimizedSeq + "GTCATAGCTGTTTCCTG"}
 		}
 	}
+	proteinFinish := time.Since(start)
+	fmt.Println(fmt.Sprintf("Finished protein optimization and fixing in %fs", proteinFinish.Seconds()))
+	start = time.Now()
 
 	// The base plasmid that we are looking at is the `pPICZ(alpha) A` plasmid and the `pGAPZ(alpha) A` plasmid. These have the general features of the ColE1 origin with zeocin resistance, the AOX1 terminator, a specific expression promoter, and the alpha-factor secretion signal.
 	// The TEF1 promoter driving expression of zeocin resistance has BsaI cut sites in the original versions of the plasmid, so I have switched these out with the pTEF1 promoters from the yeast toolkit (https://doi.org/10.1021/sb500366v FigS1). Small modifications are made to the intergenetic regions of this plasmid to remove BbsI and BsaI sites.
@@ -87,7 +101,6 @@ func main() {
 	pOpen_v3 := poly.CloneSequence{Sequence: strings.ToUpper("TAACTATCGTCTTGAGTCCAACCCGGTAAGACACGACTTATCGCCACTGGCAGCAGCCACTGGTAACAGGATTAGCAGAGCGAGGTATGTAGGCGGTGCTACAGAGTTCTTGAAGTGGTGGCCTAACTACGGCTACACTAGAAGAACAGTATTTGGTATCTGCGCTCTGCTGAAGCCAGTTACCTTCGGAAAAAGAGTTGGTAGCTCTTGATCCGGCAAACAAACCACCGCTGGTAGCGGTGGTTTTTTTGTTTGCAAGCAGCAGATTACGCGCAGAAAAAAAGGATCTCAAGAAGGCCTACTATTAGCAACAACGATCCTTTGATCTTTTCTACGGGGTCTGACGCTCAGTGGAACGAAAACTCACGTTAAGGGATTTTGGTCATGAGATTATCAAAAAGGATCTTCACCTAGATCCTTTTAAATTAAAAATGAAGTTTTAAATCAATCTAAAGTATATATGAGTAAACTTGGTCTGACAGTTACCAATGCTTAATCAGTGAGGCACCTATCTCAGCGATCTGTCTATTTCGTTCATCCATAGTTGCCTGACTCCCCGTCGTGTAGATAACTACGATACGGGAGGGCTTACCATCTGGCCCCAGTGCTGCAATGATACCGCGAGAACCACGCTCACCGGCTCCAGATTTATCAGCAATAAACCAGCCAGCCGGAAGGGCCGAGCGCAGAAGTGGTCCTGCAACTTTATCCGCCTCCATCCAGTCTATTAATTGTTGCCGGGAAGCTAGAGTAAGTAGTTCGCCAGTTAATAGTTTGCGCAACGTTGTTGCCATTGCTACAGGCATCGTGGTGTCACGCTCGTCGTTTGGTATGGCTTCATTCAGCTCCGGTTCCCAACGATCAAGGCGAGTTACATGATCCCCCATGTTGTGCAAAAAAGCGGTTAGCTCCTTCGGTCCTCCGATCGTTGTCAGAAGTAAGTTGGCCGCAGTGTTATCACTCATGGTTATGGCAGCACTGCATAATTCTCTTACTGTCATGCCATCCGTAAGATGCTTTTCTGTGACTGGTGAGTACTCAACCAAGTCATTCTGAGAATAGTGTATGCGGCGACCGAGTTGCTCTTGCCCGGCGTCAATACGGGATAATACCGCGCCACATAGCAGAACTTTAAAAGTGCTCATCATTGGAAAACGTTCTTCGGGGCGAAAACTCTCAAGGATCTTACCGCTGTTGAGATCCAGTTCGATGTAACCCACTCGTGCACCCAACTGATCTTCAGCATCTTTTACTTTCACCAGCGTTTCTGGGTGAGCAAAAACAGGAAGGCAAAATGCCGCAAAAAAGGGAATAAGGGCGACACGGAAATGTTGAATACTCATACTCTTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTATTGTCTCATGAGCGGATACATATTTGAATGTATTTAGAAAAATAAACAAATAGGGGTTCCGCGCACCTGCACCAGTCAGTAAAACGACGGCCAGTAGTCAAAAGCCTCCGACCGGAGGCTTTTGACTTGGTTCAGGTGGAGTGGGAGTAgtcttcGCcatcgCtACTAAAagccagataacagtatgcgtatttgcgcgctgatttttgcggtataagaatatatactgatatgtatacccgaagtatgtcaaaaagaggtatgctatgaagcagcgtattacagtgacagttgacagcgacagctatcagttgctcaaggcatatatgatgtcaatatctccggtctggtaagcacaaccatgcagaatgaagcccgtcgtctgcgtgccgaacgctggaaagcggaaaatcaggaagggatggctgaggtcgcccggtttattgaaatgaacggctcttttgctgacgagaacagggGCTGGTGAAATGCAGTTTAAGGTTTACACCTATAAAAGAGAGAGCCGTTATCGTCTGTTTGTGGATGTACAGAGTGATATTATTGACACGCCCGGGCGACGGATGGTGATCCCCCTGGCCAGTGCACGTCTGCTGTCAGATAAAGTCTCCCGTGAACTTTACCCGGTGGTGCATATCGGGGATGAAAGCTGGCGCATGATGACCACCGATATGGCCAGTGTGCCGGTCTCCGTTATCGGGGAAGAAGTGGCTGATCTCAGCCACCGCGAAAATGACATCAAAAACGCCATTAACCTGATGTTCTGGGGAATATAAATGTCAGGCTCCCTTATACACAGgcgatgttgaagaccaCGCTGAGGTGTCAATCGTCGGAGCCGCTGAGCAATAACTAGCATAACCCCTTGGGGCCTCTAAACGGGTCTTGAGGGGTTTTTTGCATGGTCATAGCTGTTTCCTGAGAGCTTGGCAGGTGATGACACACATTAACAAATTTCGTGAGGAGTCTCCAGAAGAATGCCATTAATTTCCATAGGCTCCGCCCCCCTGACGAGCATCACAAAAATCGACGCTCAAGTCAGAGGTGGCGAAACCCGACAGGACTATAAAGATACCAGGCGTTTCCCCCTGGAAGCTCCCTCGTGCGCTCTCCTGTTCCGACCCTGCCGCTTACCGGATACCTGTCCGCCTTTCTCCCTTCGGGAAGCGTGGCGCTTTCTCATAGCTCACGCTGTAGGTATCTCAGTTCGGTGTAGGTCGTTCGCTCCAAGCTGGGCTGTGTGCACGAACCCCCCGTTCAGCCCGACCGCTGCGCCTTATCCGG"), Circular: true}
 
 	// Simulate cloning of every gene into pOpen_v3
-	fmt.Println("Starting pOpen_v3 cloning simulation")
 	//fragmentsToSimulate := append([]string{pGAP_alphaMF_no_EAEA, pAOX1_alphaMF_no_EAEA, term_zeocinR, zeocinR_colE1}, enzymeFrags...)
 	for enzymeName, fragment := range enzymeFragments {
 		var cloneSeqs []poly.CloneSequence
@@ -109,7 +122,6 @@ func main() {
 	}
 
 	// Simulate cloning of backbone components into pOpen_v3
-	fmt.Println("Starting backbone component cloning simulation")
 	for _, backbonePart := range []string{pGAP_alphaMF_no_EAEA, pAOX1_alphaMF_no_EAEA, term_zeocinR, zeocinR_colE1} {
 		clonedFragments, err := poly.GoldenGate([]poly.CloneSequence{poly.CloneSequence{Sequence: backbonePart, Circular: false}, pOpen_v3}, "BbsI")
 		if err != nil {
@@ -125,7 +137,6 @@ func main() {
 
 	// Simulate the cloning of every gene into a pichia plasmid
 	backbone := []poly.CloneSequence{poly.CloneSequence{Sequence: term_zeocinR, Circular: false}, poly.CloneSequence{Sequence: zeocinR_colE1, Circular: false}}
-	fmt.Println("Starting Pichia cloning simulation")
 	for _, enzymeSeqs := range enzymeFragments {
 		var cloneSeqs []poly.CloneSequence
 		for _, enzymeSeq := range enzymeSeqs {
@@ -149,9 +160,11 @@ func main() {
 			}
 		}
 	}
+	cloningFinish := time.Since(start)
+	fmt.Println(fmt.Sprintf("Finished cloning simulation in %fs", cloningFinish.Seconds()))
+	start = time.Now()
 
 	// Write fragments to a string
-	fmt.Println("Write output to file")
 	var b strings.Builder
 	for enzymeName, enzymeSeqs := range enzymeFragments {
 		for i, enzymeSeq := range enzymeSeqs {
