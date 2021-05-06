@@ -1,28 +1,22 @@
-
 # Pichia toolkit
 
-Pichia pastoris is a methylotrophic yeast that is popularly used in large-scale production of proteins.
+Pichia pastoris is a methylotrophic yeast that is popularly used in large-scale production of proteins. This repo contains designs and design software for a Pichia toolkit based on the pPICZ(alpha) and pGAPZ(alpha) plasmids. Our end expression vectors can use the GAP constitutive promoter or AOX1 inducible promoter, and have a zeocin resistance marker. The backbone parts allow for MoClo-compatible proteins to be cloned into a Pichia pastoris expression vector in a single step. 
 
+## Enzymes for expression
 
-TODO: 
-- Write full docs on each protein and why
-- Explain cloning strategy in full
-- Get consistent synthesis fixing of proteins
-- Replace pfu-sso7d with phusion
+Sporenet Labs is building this toolkit for the specific purpose of lowering our enzyme costs. Pichia pastoris's secretion system should allow for simplified purification while increasing our end yield of enzyme, while creating useful parts for our customers to use. We are cloning the following enzymes for expression in Pichia pastoris:
 
-### Stats
-```
-Finished codon table generation in 2.373182s
-Finished protein optimization and fixing in 0.169248s
-Finished cloning simulation in 0.021086s
-```
-### Other
+- [Pfu-sso7d](https://patents.google.com/patent/US6627424B1/en). The patent finally expired on this enzyme. Phusion has a ~2.6x increase in fidelity over Pfu-sso7d, with [Pfu-sso7d having a 32x increase in fidelity over Taq](https://barricklab.org/twiki/bin/view/Lab/ProtocolsReagentsPfuSso7d). Polymerase is a large cost of DNA sequencing using Sporenet Lab's sequencing method, so we need to express this. We plan on using a [low cost purification method](https://pubmed.ncbi.nlm.nih.gov/31341574/).
+- [CdnDI](https://patents.google.com/patent/US8748146B2/en). The patent for this enzyme is still active, but most interestingly they [cancelled claims](https://patents.google.com/patent/US20150024464A1/en) using different homing endonucleases for targeting. If we put this enzyme into production, we'll have to pay for licensing, but we may be able to engineer our own set of synthetic TypeIIS restriction enzymes. CdnDI will make for a good control.
+- [p50-T4](https://patents.google.com/patent/US20120214208A1/en). This enzyme is under an abandoned patent, which is great. An expression plasmid is even available at [Addgene](https://www.addgene.org/87742/). Ligase is a large cost of DNA builds, so we need to express this.
+- [T4-PNK](https://www.neb.com/products/m0201-t4-polynucleotide-kinase#Product%20Information). Phosphorylates DNA and is necessary for a step in Sporenet Lab's sequencing.
+- [Taq](https://www.addgene.org/87742/). I used the `pOpen_taq` plasmid + a His tag [since I know a his tag probably works](https://www.addgene.org/166944/). Taq is necessary for a step in Sporenet Lab's sequencing pipeline.
+- [BsaI](http://rebase.neb.com/rebase/enz/Eco31I.html). Technically, Eco31I. The folks at OpenBioeconomy lab found that Eco31I, an isoschizomer of BsaI, was unpatented, and they got the sequence for it. I'm attempting something that may not work with this Enzyme and BtgZI - we know what overexpression of EcoRI [is toxic in yeast if not secreted](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC397259/) (likely due to diffusion into the nucleus), but will overexpression be toxic if we secrete the protein out of the cell? Only an experiment will tell.
+- [BtgZI](https://patents.google.com/patent/US7029900) patented by NEB, but patent has expired. This enzyme is an extremely interesting TypeIIS in that its recognition site is ~10bp from its cut site. If you overlap BtgZI and BsaI, you can even get an {BtgZI recognition}-{BsaI recognition}-{BsaI cut}-{BtgZI cut}, which we call "BtgZI skipping". We use a derivative of this method in this toolkit to be able to directly clone large genes either directly into expression vectors or into `pOpen_v3`, depending on the enzyme used. Normally, BtgZI is used in combination with BbsI for cloning small genes into `pOpen_v3`
 
-TEV came from https://www.addgene.org/8827/
-p50-T4 came from https://www.addgene.org/87742/
-phusion came from https://benchling.com/s/seq-YMXiaSNd56oDBcy530fB/edit
+## Cloning strategy 
 
-- Most proteins in this set have N terminal his tags, so we're just going to use that for BsaI and XbaI
+We have two paths for cloning these genes into expression vectors. We can either use BsaI and directly clone all fragments together into functional expression vectors, or we can use BtgZI and clone each individual gene and backbone component into `pOpen_v3`. From there, we can use BsaI to clone all fragments together into functional expression vectors. 
 
-Purification method pfu - https://pubmed.ncbi.nlm.nih.gov/31341574/
+Later, customers will be able to order genes for expression in Pichia pastoris, and we will clone these genes into expression vectors using BsaI and prebuilt individual backbone components from `pOpen_v3`. While these parts do not take advantage of the larger Sporenet Labs modular ecosystem, they will work well enough for most customers and for our internal uses.
 
