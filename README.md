@@ -26,3 +26,5 @@ Later, customers will be able to order genes for expression in Pichia pastoris, 
 
 Both the GAP constitutive and AOX1 inducible promoter use the [alpha-no-EAEA](https://doi.org/10.1021/sb500366v) secretion tag to secrete proteins from Pichia pastoris. Following cleavage with Kex2, the full protein without the secretion tag is secreted into the media outside of the Pichia pastoris cells. After centrifugation, you can directly purify proteins from the resulting supernatant. 
 
+# Designs
+For protein sequences I began with, please see `data/enzymes.fasta`. For the DNA sequences that I will need to synthesize, please see `data/output.fasta`
