@@ -2,6 +2,8 @@
 
 Pichia pastoris is a methylotrophic yeast that is popularly used in large-scale production of proteins. This repo contains designs and design software for a Pichia toolkit based on the pPICZ(alpha) and pGAPZ(alpha) plasmids. Our Pichia pastoris expression and secretion vectors can use the GAP constitutive promoter or AOX1 inducible promoter, have a zeocin resistance marker, and allow for MoClo-compatible proteins to be cloned in a single step. 
 
+In total, this toolkit takes 19,831 base pairs to synthesize.
+
 ## Enzymes for expression
 
 Sporenet Labs is building this toolkit for the specific purpose of lowering our enzyme costs. Pichia pastoris's secretion system should allow for simplified purification while increasing our end yield of enzyme, while creating useful parts for our customers to use. We are cloning the following enzymes for expression in Pichia pastoris:
