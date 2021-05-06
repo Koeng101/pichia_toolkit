@@ -1,6 +1,9 @@
 
 # Pichia toolkit
 
+Pichia pastoris is a methylotrophic yeast that is popularly used in large-scale production of proteins.
+
+
 TODO: 
 - Write full docs on each protein and why
 - Explain cloning strategy in full
