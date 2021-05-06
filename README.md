@@ -1,6 +1,6 @@
 # Pichia toolkit
 
-Pichia pastoris is a methylotrophic yeast that is popularly used in large-scale production of proteins. This repo contains designs and design software for a Pichia toolkit based on the pPICZ(alpha) and pGAPZ(alpha) plasmids. Our end expression vectors can use the GAP constitutive promoter or AOX1 inducible promoter, and have a zeocin resistance marker. The backbone parts allow for MoClo-compatible proteins to be cloned into a Pichia pastoris expression vector in a single step. 
+Pichia pastoris is a methylotrophic yeast that is popularly used in large-scale production of proteins. This repo contains designs and design software for a Pichia toolkit based on the pPICZ(alpha) and pGAPZ(alpha) plasmids. Our Pichia pastoris expression and secretion vectors can use the GAP constitutive promoter or AOX1 inducible promoter, have a zeocin resistance marker, and allow for MoClo-compatible proteins to be cloned in a single step. 
 
 ## Enzymes for expression
 
@@ -19,4 +19,8 @@ Sporenet Labs is building this toolkit for the specific purpose of lowering our 
 We have two paths for cloning these genes into expression vectors. We can either use BsaI and directly clone all fragments together into functional expression vectors, or we can use BtgZI and clone each individual gene and backbone component into `pOpen_v3`. From there, we can use BsaI to clone all fragments together into functional expression vectors. 
 
 Later, customers will be able to order genes for expression in Pichia pastoris, and we will clone these genes into expression vectors using BsaI and prebuilt individual backbone components from `pOpen_v3`. While these parts do not take advantage of the larger Sporenet Labs modular ecosystem, they will work well enough for most customers and for our internal uses.
+
+## Expression strategy
+
+Both the GAP constitutive and AOX1 inducible promoter use the [alpha-no-EAEA](https://doi.org/10.1021/sb500366v) secretion tag to secrete proteins from Pichia pastoris. Following cleavage with Kex2, the full protein without the secretion tag is secreted into the media outside of the Pichia pastoris cells. After centrifugation, you can directly purify proteins from the resulting supernatant. 
 
