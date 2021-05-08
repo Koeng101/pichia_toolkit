@@ -166,8 +166,10 @@ func main() {
 
 	// Write fragments to a string
 	var b strings.Builder
+	var bases int
 	for enzymeName, enzymeSeqs := range enzymeFragments {
 		for i, enzymeSeq := range enzymeSeqs {
+			bases = bases + len(enzymeSeq)
 			fmt.Fprintf(&b, ">%s-%d\n%s\n", enzymeName, i, enzymeSeq)
 		}
 	}
@@ -175,8 +177,14 @@ func main() {
 	fmt.Fprintf(&b, ">%s\n%s\n", "zeocinR_colE1", zeocinR_colE1)
 	fmt.Fprintf(&b, ">%s\n%s\n", "pGAP_alphaMF_no_EAEA", pGAP_alphaMF_no_EAEA)
 	fmt.Fprintf(&b, ">%s\n%s\n", "pAOX1_alphaMF_no_EAEA", pAOX1_alphaMF_no_EAEA)
+	bases = bases + len(term_zeocinR)
+	bases = bases + len(zeocinR_colE1)
+	bases = bases + len(pGAP_alphaMF_no_EAEA)
+	bases = bases + len(pAOX1_alphaMF_no_EAEA)
 
 	f, err := os.Create("data/output.fasta")
 	defer f.Close()
 	f.WriteString(b.String())
+
+	fmt.Println(fmt.Sprintf("Synthesizing %d bases", bases))
 }
